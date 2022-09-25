@@ -145,7 +145,7 @@ class BeeHive(object):
             # prints out information about computation
             if self.verbose:
                 self._verbose(itr, cost)
-
+        print("Solution:", self.solution)
         return cost
 
     def __init__(self                 ,
@@ -236,6 +236,7 @@ class BeeHive(object):
         if (values[index] < self.best):
             self.best     = values[index]
             self.solution = self.population[index].vector
+            # print("solution:", self.solution)
 
     def compute_probability(self):
         """
