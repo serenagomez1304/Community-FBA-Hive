@@ -36,6 +36,7 @@ Romain Wuilbercq
 import random
 import sys
 import copy
+import FBA
 
 
 # ---- BEE CLASS
@@ -43,7 +44,7 @@ import copy
 class Bee(object):
     """ Creates a bee object. """
 
-    def __init__(self, lower, upper, fun, funcon=None):
+    def __init__(self, lower, upper, met, obj, fun, funcon=None):
         """
 
         Instantiates a bee object randomly.
@@ -58,7 +59,7 @@ class Bee(object):
         """
 
         # creates a random solution vector
-        self._random(lower, upper)
+        self._random(lower, upper, met, obj)
 
         # checks if the problem constraint(s) are satisfied
         if not funcon:
@@ -68,7 +69,7 @@ class Bee(object):
 
         # computes fitness of solution vector
         if (fun != None):
-            self.value = fun(self.vector)
+            self.value = fun(self.vector, self.met, self.obj)
         else:
             self.value = sys.float_info.max
         self._fitness()
@@ -76,12 +77,15 @@ class Bee(object):
         # initialises trial limit counter - i.e. abandonment counter
         self.counter = 0
 
-    def _random(self, lower, upper):
+    def _random(self, lower, upper, met, obj):
         """ Initialises a solution vector randomly. """
 
         self.vector = []
+        self.met = met
+        self.obj = obj
         for i in range(len(lower)):
-            self.vector.append( lower[i] + random.random() * (upper[i] - lower[i]) )
+            # self.vector.append( lower[i] + random.random() * (upper[i] - lower[i]) )
+            self.vector.append( random.randint(lower[i], upper[i]))
 
     def _fitness(self):
         """
@@ -145,11 +149,12 @@ class BeeHive(object):
             # prints out information about computation
             if self.verbose:
                 self._verbose(itr, cost)
-        print("Solution:", self.solution)
+        # print("Solution:", self.solution)
         return cost
 
     def __init__(self                 ,
                  lower, upper         ,
+                 met, obj             ,
                  fun          = None  ,
                  numb_bees    =  30   ,
                  max_itrs     = 100   ,
@@ -211,13 +216,15 @@ class BeeHive(object):
         self.evaluate = fun
         self.lower    = lower
         self.upper    = upper
+        self.met = met
+        self.obj = obj
 
         # initialises current best and its a solution vector
         self.best = sys.float_info.max
         self.solution = None
 
         # creates a bee hive
-        self.population = [ Bee(lower, upper, fun) for i in range(self.size) ]
+        self.population = [ Bee(lower, upper, met, obj, fun) for i in range(self.size) ]
 
         # initialises best solution vector to food nectar
         self.find_best()
@@ -236,7 +243,6 @@ class BeeHive(object):
         if (values[index] < self.best):
             self.best     = values[index]
             self.solution = self.population[index].vector
-            # print("solution:", self.solution)
 
     def compute_probability(self):
         """
@@ -294,7 +300,7 @@ class BeeHive(object):
         zombee.vector = self._check(zombee.vector, dim=d)
 
         # computes fitness of mutant
-        zombee.value = self.evaluate(zombee.vector)
+        zombee.value = self.evaluate(zombee.vector, zombee.met, zombee.obj)
         zombee._fitness()
 
         # deterministic crowding
@@ -408,7 +414,7 @@ class BeeHive(object):
         if (trials[index] > self.max_trials):
 
             # creates a new scout bee randomly
-            self.population[index] = Bee(self.lower, self.upper, self.evaluate)
+            self.population[index] = Bee(self.lower, self.upper, self.met, self.obj, self.evaluate)
 
             # sends scout bee to exploit its solution vector
             self.send_employee(index)

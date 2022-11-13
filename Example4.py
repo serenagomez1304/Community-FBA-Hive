@@ -117,7 +117,7 @@ def compare_func(vector):
     return f
 
 def evaluator(vector):
-    print(vector)
+    # print(vector)
     return compare_func(vector)
 
 
@@ -130,8 +130,8 @@ def run():
     model = Hive.BeeHive(lower     = [-10]*ndim   ,
                          upper     = [10]*ndim   ,
                          fun       = evaluator  ,
-                         numb_bees = 50         ,
-                         max_itrs  = 1000        ,
+                         numb_bees = 10         ,
+                         max_itrs  = 10        ,
                          verbose   = True       ,)
 
     # runs model
