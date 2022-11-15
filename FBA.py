@@ -7,7 +7,8 @@ app = Flask(__name__)
 microbes = [
     {
         "Name": 'E.coli',
-        "microbeName": 'iJO1366'
+        "microbeName": 'iJR904'
+        # "microbeName": 'iJO1366'
     },
     {
         "Name": 'M.tuberculosis',
@@ -16,6 +17,21 @@ microbes = [
     {
         "Name": 'P.putida',
         "microbeName": 'iJN746'
+    },
+] 
+
+microbeCommunity = [
+    {
+        "Name": 'E.coli E.coli'
+    },
+    {
+        "Name": 'E.coli M.tuberculosis'
+    },
+    {
+        "Name": 'M.tuberculosis M.tuberculosis'
+    },
+    {
+        "Name": 'E.coli M.tuberculosis M.tuberculosis'
     },
 ] 
 
@@ -82,8 +98,11 @@ from Hive import Utilities
 # import external modules
 import cobra
 from cobra.io import load_model
+from tqdm import tqdm
+import pandas as pd
 import numpy as np
 import random
+from scipy.integrate import solve_ivp
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -183,20 +202,52 @@ def visulaize(vector, met, obj):
     b.save_html("/home/albee/Documents/GitHub/Capstone/Community-FBA-Hive/Output/output.html")
     return solution.objective_value, solution.fluxes
 
+def merge_models(desired_model):
+    model_file_info = pd.read_csv('./bigg_model_file_info.txt',dtype = str)
+    merged_model = cobra.Model(id_or_model='asd')
+    i=0
+    for mod in desired_model:
+        # print("Round:",i)
+        i+=1
+        # cobra_models = []
+        #if any(model_file_info.Species == mod):
+        flnm = model_file_info.loc[model_file_info.Species == mod,'File'].iloc[0] #get file name for the species
+        temp_model = cobra.io.load_json_model(flnm)  #load cobra model for the species and store it
+        # print(merged_model)
+        # print(len(merged_model.reactions))
+        merged_model=merged_model.merge(temp_model,inplace=False)
+    return merged_model
+
 @app.route('/legoflux', methods=['GET'])
 def show():
     model = None
-    if 'name' in request.args :
-        name = request.args['name']
+    if 'name1' in request.args :
+        name1 = request.args['name1']
+    else :
+        return 'unknown request'
+    if 'name2' in request.args :
+        name2 = request.args['name2']
+    else :
+        return 'unknown request'
+    if 'name3' in request.args :
+        name3 = request.args['name3']
     else :
         return 'unknown request'
 
-    for x in microbes :
-        if x['Name'] == name:
-            model = load_model(x['microbeName'])
+    if len(name2) == 0 and len(name3) == 0:
+            for x in microbes :
+                if x['Name'] == name1:
+                    model = load_model(x['microbeName'])
+                    break
+    else:
+            microbeList = []
+            microbeList.append(name2)
+            if name3 !='' :
+                    microbeList.append(name3)
+            model = merge_models(microbeList)
 
     if 'metabolite' not in request.args :
-            return jsonify(list(model.summary().uptake_flux.reaction))
+        return jsonify(list(model.summary().uptake_flux.reaction))
 
     if 'metabolite' in request.args:
         met = request.args['metabolite']
@@ -210,10 +261,10 @@ def show():
         ub = int(request.args['ubound'])
     else :
         return 'unknown request'
-    # if 'objective' in request.args:
-    #     obj = request.args['obj']
-    # else :
-    obj = "BIOMASS_Ec_iJO1366_core_53p95M"
+    if 'objective' in request.args :
+         obj = request.args['objective']
+         if obj == '' :
+                obj = "BIOMASS_Ec_iJO1366_core_53p95M"
     
     # fba(met,lb,ub,obj)
     objVal, fluxes, solution, mapOutput = run(met,lb,ub,obj)
