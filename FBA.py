@@ -199,7 +199,7 @@ def visulaize(vector, met, obj):
     model.reactions.get_by_id(met).lower_bound = vector[0]
     solution=model.optimize()
     b = Builder(map_name='e_coli_core.Core metabolism', reaction_data=solution.fluxes)
-    b.save_html("/home/albee/Documents/GitHub/Capstone/Community-FBA-Hive/Output/output.html")
+    b.save_html("/home/albee/Documents/GitHub/Capstone/FBA-UI/src/assets/output.html")
     return solution.objective_value, solution.fluxes
 
 def merge_models(desired_model):
@@ -269,6 +269,7 @@ def show():
     # fba(met,lb,ub,obj)
     objVal, fluxes, solution, mapOutput = run(met,lb,ub,obj)
     return jsonify({"growthRate": objVal, "Fluxes": list(fluxes), "optimalValue": solution, "mapOutput": mapOutput})
+    # return render_template("output.html")
 
 # ---- SOLVE TEST CASE
 
@@ -281,7 +282,7 @@ def run(met,lb,ub,obj):
                          met = met,
                          obj = obj,
                          fun       = evaluator   ,
-                         numb_bees = 10         ,
+                         numb_bees = 50         ,
                          max_itrs  = 10        ,
                          verbose   = True       ,)
 
@@ -294,9 +295,9 @@ def run(met,lb,ub,obj):
     # solution = create_solution_vectors(model.solution)
     # print(solution)
     print("Solution:", model.solution)
-    objVal, fluxes = visulaize(model.solution, met, obj)
+    objVal, fluxes = visulaize([-10], met, obj)
     # Opening the html file
-    HTMLFile = open("./Output/output.html", "r")
+    HTMLFile = open("./templates/output.html", "r")
     
     # Reading the file
     output = HTMLFile.read()

@@ -239,8 +239,13 @@ class BeeHive(object):
         """ Finds current best bee candidate. """
 
         values = [ bee.value for bee in self.population ]
-        index  = values.index(min(values))
-        if (values[index] < self.best):
+        index  = values.index(max(values))
+        
+        if (values[index] > self.best):
+            self.best     = values[index]
+            self.solution = self.population[index].vector
+
+        if self.solution == None:
             self.best     = values[index]
             self.solution = self.population[index].vector
 
